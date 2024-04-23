@@ -27,10 +27,16 @@ async function run() {
         await client.connect();
 
         const coffeeCollection = client.db('myDB').collection('coffees')
+        const userCollection = client.db('myDB').collection('user')
 
 
         app.get('/coffees', async (req, res) => {
             const result = await coffeeCollection.find().toArray()
+            res.send(result)
+        })
+
+        app.get('/users', async (req, res) => {
+            const result = await userCollection.find().toArray()
             res.send(result)
         })
 
@@ -42,10 +48,15 @@ async function run() {
             res.send(result)
         })
 
+        app.post('/users', async (req, res) => {
+            const user = req.body;
+            const result = await userCollection.insertOne(user)
+            res.send(result)
+        })
+
 
         app.get('/coffees/:id', async (req, res) => {
             const id = req.params.id;
-            console.log(id)
 
             const query = { _id: new ObjectId(id) }
             const result = await coffeeCollection.findOne(query)
@@ -55,7 +66,7 @@ async function run() {
         app.put('/coffees', async (req, res) => {
             const coffee = req.body;
             const id = coffee.id
-            
+
             const filter = { _id: new ObjectId(id) }
             const options = { upsert: true };
             const updatedCoffee = {
@@ -72,11 +83,34 @@ async function run() {
             res.send(result)
         })
 
+        app.patch('/users', async (req, res) => {
+            const updatedData = req.body;
+            console.log(updatedData)
+            const email = updatedData.email;
+
+            const filter = { email: updatedData.email }
+            const user = {
+                $set: {
+                    lastSignInAt: updatedData.lastLoggedAt
+                }
+            }
+            const result = await userCollection.updateOne(filter, user)
+            res.send(result)
+        })
+
         app.delete('/coffees/:id', async (req, res) => {
             const id = req.params.id;
             console.log(id)
             const query = { _id: new ObjectId(id) };
             const result = await coffeeCollection.deleteOne(query)
+            res.send(result)
+        })
+
+        app.delete('/users/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id)
+            const query = { _id: new ObjectId(id) }
+            const result = await userCollection.deleteOne(query)
             res.send(result)
         })
 
